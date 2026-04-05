@@ -1,0 +1,138 @@
+import java.util.*;
+abstract class Transaction {
+    protected String transactionId;
+    protected double amount;
+    public Transaction(String transactionId, double amount) {
+        this.transactionId = transactionId;
+        this.amount = amount;
+    }
+    public abstract void execute(Account account);
+    public String toString() {
+        return "ID: " + transactionId + " | Amount: " + amount;
+    }
+}
+class DepositTransaction extends Transaction {
+    public DepositTransaction(String id, double amount) {
+        super(id, amount);
+    }
+    public void execute(Account account) {
+        account.setBalance(account.getBalance() + amount);
+    }
+    public String toString() {
+        return super.toString() + " | Type: Deposit";
+    }
+}
+class WithdrawTransaction extends Transaction {
+    public WithdrawTransaction(String id, double amount) {
+        super(id, amount);
+    }
+    public void execute(Account account) {
+        if (account.getBalance() >= amount) {
+            account.setBalance(account.getBalance() - amount);
+        } else {
+            System.out.println("Insufficient Balance");
+        }
+    }
+    public String toString() {
+        return super.toString() + " | Type: Withdraw";
+    }
+}
+class Account {
+    private String accountNumber;
+    private double balance;
+    private int pin;
+    private List<Transaction> transactions;
+    public Account(String accNo, double balance, int pin) {
+        this.accountNumber = accNo;
+        this.balance = balance;
+        this.pin = pin;
+        transactions = new ArrayList<>();
+    }
+    public boolean validatePin(int enteredPin) {
+        return this.pin == enteredPin;
+    }
+    public void performTransaction(Transaction t) {
+        t.execute(this);
+        transactions.add(t);
+    }
+    public double getBalance() {
+        return balance;
+    }
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
+    public void showTransactions() {
+        for (Transaction t : transactions) {
+            System.out.println(t);
+        }
+    }
+}
+class Customer {
+    private String name;
+    private String id;
+    private Account account;
+    public Customer(String name, String id, Account acc) {
+        this.name = name;
+        this.id = id;
+        this.account = acc;
+    }
+    public Account getAccount() {
+        return account;
+    }
+}
+class ATM {
+    public void start(Customer customer) {
+        Scanner sc = new Scanner(System.in);
+        Account acc = customer.getAccount();
+        System.out.print("Enter PIN: ");
+        int pin = sc.nextInt();
+        if (!acc.validatePin(pin)) {
+            System.out.println("Invalid PIN ❌");
+            return;
+        }
+        System.out.println("PIN Verified ✅");
+        int choice;
+        do {
+            System.out.println("\n1. Deposit");
+            System.out.println("2. Withdraw");
+            System.out.println("3. Check Balance");
+            System.out.println("4. Transaction History");
+            System.out.println("5. Exit");
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter amount: ");
+                    double d = sc.nextDouble();
+                    Transaction t1 = new DepositTransaction("T" + System.currentTimeMillis(), d);
+                    acc.performTransaction(t1);
+                    break;
+                case 2:
+                    System.out.print("Enter amount: ");
+                    double w = sc.nextDouble();
+                    Transaction t2 = new WithdrawTransaction("T" + System.currentTimeMillis(), w);
+                    acc.performTransaction(t2);
+                    break;
+                case 3:
+                    System.out.println("Balance: " + acc.getBalance());
+                    break;
+                case 4:
+                    acc.showTransactions();
+                    break;
+                case 5:
+                    System.out.println("Thank you!");
+                    break;
+                default:
+                    System.out.println("Invalid choice");
+            }
+        } while (choice != 5);
+    }
+}
+public class Main {
+    public static void main(String[] args) {
+        Account acc = new Account("12345", 1000, 1234);
+        Customer customer = new Customer("Harsha", "C001", acc);
+        ATM atm = new ATM();
+        atm.start(customer);
+    }
+}
